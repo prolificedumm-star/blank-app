@@ -1,22 +1,34 @@
 import streamlit as st
+import pandas as pd
+import joblib
 
-st.title("Simple Input UI")
+st.title("🚢 Titanic Survival Predictor")
 
-# Text input
-name = st.text_input("Enter your name:")
+# Load model & features
+model = joblib.load("titanic_model.pkl")
+features = joblib.load("titanic_features.pkl")
 
-# Number input
-age = st.number_input("Enter your age:", min_value=0, max_value=120)
+st.subheader("Enter Passenger Details")
 
-# Dropdown
-gender = st.selectbox("Select gender:", ["Male", "Female", "Other"])
+pclass = st.selectbox("Passenger Class (1 = First, 3 = Third)", [1, 2, 3])
+sex = st.radio("Sex", ["male", "female"])
+age = st.number_input("Age", min_value=0, max_value=100, value=25)
+fare = st.number_input("Fare", min_value=0.0, max_value=600.0, value=50.0)
 
-# Checkbox
-agree = st.checkbox("I agree to the terms and conditions")
+if st.button("Predict Survival"):
+    # Convert inputs into DataFrame
+    input_df = pd.DataFrame([{
+        "Pclass": pclass,
+        "Sex": 0 if sex == "male" else 1,
+        "Age": age,
+        "Fare": fare
+    }])
 
-# Button action
-if st.button("Submit"):
-    if agree:
-        st.success(f"Hello {name}! You are {age} years old and identified as {gender}.")
+    # Predict
+    pred = model.predict(input_df)[0]
+    prob = model.predict_proba(input_df)[0][1]
+
+    if pred == 1:
+        st.success(f"🎉 Survived! (Probability: {prob:.2f})")
     else:
-        st.warning("Please agree to the terms to continue.")
+        st.error(f"💀 Did NOT survive (Probability: {prob:.2f})")
